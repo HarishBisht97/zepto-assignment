@@ -1,8 +1,9 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Chip from "./Chip";
 import ListItem from "./ListItem";
 
 const EMPTY_STRING = "";
+const BACKSPACE = "Backspace";
 
 const AutoSelect = ({ options, onChange }) => {
   const [inputValue, setInputValue] = useState(EMPTY_STRING);
@@ -18,7 +19,7 @@ const AutoSelect = ({ options, onChange }) => {
   };
 
   const handleKeyDown = (e) => {
-    if (e.key === "Backspace") {
+    if (e.key === BACKSPACE) {
       if (inputValue === EMPTY_STRING && highlightedIndex === -1) {
         setHighlightedIndex(selectedOptions.length - 1);
       } else if (inputValue === EMPTY_STRING && highlightedIndex >= 0) {
@@ -52,14 +53,11 @@ const AutoSelect = ({ options, onChange }) => {
     }
   };
 
-  const filteredOptions = options
-    .filter((option) =>
-      option.label.toLowerCase().includes(inputValue.toLowerCase())
-    )
-    .filter(
-      (option) =>
-        !selectedOptions.some((selected) => selected.value === option.value)
-    );
+  const filteredOptions = options.filter(
+    (option) =>
+      option.label.toLowerCase().includes(inputValue.toLowerCase()) &&
+      !selectedOptions.some((selected) => selected.value === option.value)
+  );
 
   useEffect(() => {
     document.addEventListener("click", handleOutsideClick);
@@ -68,35 +66,41 @@ const AutoSelect = ({ options, onChange }) => {
     };
   }, []);
 
+  const renderSelectedOptions = () => (
+    <div className="flex flex-wrap max-w-3xl border rounded-md bg-gray-100 py-4 w-[800px]">
+      {selectedOptions.map((selectedOption, index) => (
+        <Chip
+          key={selectedOption.value}
+          user={selectedOption}
+          handleRemoveOption={() => handleRemoveOption(selectedOption)}
+          isHighlighted={index === highlightedIndex}
+        />
+      ))}
+      <input
+        type="text"
+        value={inputValue}
+        onChange={handleInputChange}
+        onFocus={() => setIsOpen(true)}
+        onKeyDown={handleKeyDown}
+        className="flex-grow max-w-6xl outline-none bg-transparent mx-3"
+      />
+    </div>
+  );
+
+  const renderOptionsList = () => (
+    <ul className=" mt-2 border rounded-md bg-white max-h-60 max-w-6xl overflow-y-auto">
+      {filteredOptions.map((option) => (
+        <li key={option.value} onClick={() => handleOptionClick(option)}>
+          <ListItem user={option} />
+        </li>
+      ))}
+    </ul>
+  );
+
   return (
     <div ref={inputRef} className="justify-center items-center">
-      <div className="flex flex-wrap justify-center items-center border rounded-md bg-gray-100 py-4">
-        {selectedOptions.map((selectedOption, index) => (
-          <Chip
-            key={selectedOption.value}
-            user={selectedOption}
-            handleRemoveOption={() => handleRemoveOption(selectedOption)}
-            isHighlighted={index === highlightedIndex}
-          />
-        ))}
-        <input
-          type="text"
-          value={inputValue}
-          onChange={handleInputChange}
-          onFocus={() => setIsOpen(true)}
-          onKeyDown={handleKeyDown}
-          className="w-[800px] max-w-6xl outline-none bg-transparent"
-        />
-      </div>
-      {isOpen && (
-        <ul className=" mt-2 border rounded-md bg-white max-h-60 max-w-6xl overflow-y-auto">
-          {filteredOptions.map((option) => (
-            <li key={option.value} onClick={() => handleOptionClick(option)}>
-              <ListItem user={option} />
-            </li>
-          ))}
-        </ul>
-      )}
+      {renderSelectedOptions()}
+      {isOpen && renderOptionsList()}
     </div>
   );
 };
