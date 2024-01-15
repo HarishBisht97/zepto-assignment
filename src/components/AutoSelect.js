@@ -2,22 +2,37 @@ import React, { useState, useRef, useEffect } from "react";
 import Chip from "./Chip";
 import ListItem from "./ListItem";
 
+const EMPTY_STRING = "";
+
 const AutoSelect = ({ options, onChange }) => {
-  const [inputValue, setInputValue] = useState("");
+  const [inputValue, setInputValue] = useState(EMPTY_STRING);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedOptions, setSelectedOptions] = useState([]);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const inputRef = useRef();
 
   const handleInputChange = (e) => {
-    setInputValue(e.target.value);
+    const newInputValue = e.target.value;
+    setInputValue(newInputValue);
     setIsOpen(true);
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Backspace") {
+      if (inputValue === EMPTY_STRING && highlightedIndex === -1) {
+        setHighlightedIndex(selectedOptions.length - 1);
+      } else if (inputValue === EMPTY_STRING && highlightedIndex >= 0) {
+        handleRemoveOption(selectedOptions[highlightedIndex]);
+        setHighlightedIndex(-1);
+      }
+    }
   };
 
   const handleOptionClick = (option) => {
     if (!selectedOptions.some((selected) => selected.value === option.value)) {
       setSelectedOptions([...selectedOptions, option]);
     }
-    setInputValue("");
+    setInputValue(EMPTY_STRING);
     setIsOpen(false);
     onChange([...selectedOptions, option]);
   };
@@ -27,6 +42,7 @@ const AutoSelect = ({ options, onChange }) => {
       (selected) => selected.value !== removedOption.value
     );
     setSelectedOptions(updatedOptions);
+    setHighlightedIndex(-1);
     onChange(updatedOptions);
   };
 
@@ -55,10 +71,12 @@ const AutoSelect = ({ options, onChange }) => {
   return (
     <div ref={inputRef} className="justify-center items-center">
       <div className="flex flex-wrap justify-center items-center border rounded-md bg-gray-100 py-4">
-        {selectedOptions.map((selectedOption) => (
+        {selectedOptions.map((selectedOption, index) => (
           <Chip
+            key={selectedOption.value}
             user={selectedOption}
             handleRemoveOption={() => handleRemoveOption(selectedOption)}
+            isHighlighted={index === highlightedIndex}
           />
         ))}
         <input
@@ -66,6 +84,7 @@ const AutoSelect = ({ options, onChange }) => {
           value={inputValue}
           onChange={handleInputChange}
           onFocus={() => setIsOpen(true)}
+          onKeyDown={handleKeyDown}
           className="w-[800px] max-w-6xl outline-none bg-transparent"
         />
       </div>

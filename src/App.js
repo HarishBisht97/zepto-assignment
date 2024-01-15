@@ -1,5 +1,5 @@
 import "./App.css";
-import AutoSelect from "./AutoSelect";
+import AutoSelect from "./components/AutoSelect";
 import { USERS } from "./mockdata";
 
 function App() {
